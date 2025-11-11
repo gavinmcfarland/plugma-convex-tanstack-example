@@ -19,6 +19,7 @@ This document explains how to integrate Convex (a backend-as-a-service) with Sve
 ## Overview
 
 Convex provides a real-time backend for your Figma plugin, allowing you to:
+
 - Store data persistently in the cloud
 - Sync data across multiple plugin instances
 - Handle real-time updates automatically
@@ -42,6 +43,7 @@ pnpm add convex convex-svelte
 ```
 
 This installs:
+
 - `convex`: The core Convex client and server libraries
 - `convex-svelte`: Svelte-specific hooks and utilities
 
@@ -54,6 +56,7 @@ npx convex dev
 ```
 
 This will:
+
 - Prompt you to log in with GitHub (if not already logged in)
 - Create a new Convex project or connect to an existing one
 - Generate the `src/convex/_generated` folder with TypeScript types
@@ -68,7 +71,7 @@ Create a `convex.json` file in your project root:
 
 ```json
 {
-  "functions": "src/convex/"
+	"functions": "src/convex/"
 }
 ```
 
@@ -81,7 +84,7 @@ Create `src/ui/convex.ts`:
 ```typescript
 // Convex URL - will be set via environment variable when running `npx convex dev`
 // Convex creates a .env.local file with VITE_CONVEX_URL
-export const CONVEX_URL = import.meta.env.VITE_CONVEX_URL || "";
+export const CONVEX_URL = import.meta.env.VITE_CONVEX_URL || '';
 ```
 
 This reads the Convex deployment URL from environment variables that Convex sets up automatically.
@@ -92,15 +95,16 @@ Figma plugins need explicit permission to access external APIs. Update your `man
 
 ```json
 {
-  "networkAccess": {
-    "allowedDomains": ["*"],
-    "devAllowedDomains": ["ws://localhost:3210"],
-    "reasoning": "This plugin needs to access the Convex API to save and retrieve data."
-  }
+	"networkAccess": {
+		"allowedDomains": ["*"],
+		"devAllowedDomains": ["ws://localhost:3210"],
+		"reasoning": "This plugin needs to access the Convex API to save and retrieve data."
+	}
 }
 ```
 
 **Important Notes:**
+
 - `allowedDomains: ["*"]` allows access to all domains (required for Convex cloud deployments)
 - `devAllowedDomains` allows WebSocket connections to local Convex dev server
 - For production, you might want to restrict to specific Convex domains like `["https://*.convex.cloud", "https://*.convex.site"]`
@@ -137,14 +141,14 @@ figma-convex/
 Create `src/convex/schema.ts`:
 
 ```typescript
-import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
+import { defineSchema, defineTable } from 'convex/server';
+import { v } from 'convex/values';
 
 export default defineSchema({
-  todos: defineTable({
-    text: v.string(),
-    completed: v.boolean(),
-  }),
+	todos: defineTable({
+		text: v.string(),
+		completed: v.boolean(),
+	}),
 });
 ```
 
@@ -155,60 +159,61 @@ This defines your database tables and their schemas using Convex's validation sy
 Create `src/convex/todos.ts` (or any function file):
 
 ```typescript
-import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
+import { query, mutation } from './_generated/server';
+import { v } from 'convex/values';
 
 // Query to get all todos
 export const get = query({
-  args: {},
-  handler: async (ctx) => {
-    const todos = await ctx.db.query("todos").collect();
-    return todos;
-  },
+	args: {},
+	handler: async (ctx) => {
+		const todos = await ctx.db.query('todos').collect();
+		return todos;
+	},
 });
 
 // Mutation to add a new todo
 export const add = mutation({
-  args: {
-    text: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const todoId = await ctx.db.insert("todos", {
-      text: args.text,
-      completed: false,
-    });
-    return todoId;
-  },
+	args: {
+		text: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const todoId = await ctx.db.insert('todos', {
+			text: args.text,
+			completed: false,
+		});
+		return todoId;
+	},
 });
 
 // Mutation to toggle todo completion
 export const toggle = mutation({
-  args: {
-    id: v.id("todos"),
-  },
-  handler: async (ctx, args) => {
-    const todo = await ctx.db.get(args.id);
-    if (!todo) {
-      throw new Error("Todo not found");
-    }
-    await ctx.db.patch(args.id, {
-      completed: !todo.completed,
-    });
-  },
+	args: {
+		id: v.id('todos'),
+	},
+	handler: async (ctx, args) => {
+		const todo = await ctx.db.get(args.id);
+		if (!todo) {
+			throw new Error('Todo not found');
+		}
+		await ctx.db.patch(args.id, {
+			completed: !todo.completed,
+		});
+	},
 });
 
 // Mutation to delete a todo
 export const remove = mutation({
-  args: {
-    id: v.id("todos"),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.delete(args.id);
-  },
+	args: {
+		id: v.id('todos'),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.delete(args.id);
+	},
 });
 ```
 
 **Key Points:**
+
 - `query`: For reading data (automatically subscribes to changes)
 - `mutation`: For writing data (create, update, delete)
 - Functions are automatically exposed as `api.todos.get`, `api.todos.add`, etc.
@@ -311,21 +316,21 @@ In `src/ui/App.svelte`:
 
 ### Key Concepts
 
-1. **Queries (`useQuery`)**: 
-   - Automatically subscribes to data changes
-   - Returns reactive object with `data`, `isLoading`, `error`, `isStale`
-   - Data updates automatically when backend changes
+1. **Queries (`useQuery`)**:
+    - Automatically subscribes to data changes
+    - Returns reactive object with `data`, `isLoading`, `error`, `isStale`
+    - Data updates automatically when backend changes
 
-2. **Mutations (`convex.mutation`)**: 
-   - Use `useConvexClient()` to get the client
-   - Call `convex.mutation(api.functionName, args)`
-   - Returns a Promise
-   - After mutation, queries automatically update
+2. **Mutations (`convex.mutation`)**:
+    - Use `useConvexClient()` to get the client
+    - Call `convex.mutation(api.functionName, args)`
+    - Returns a Promise
+    - After mutation, queries automatically update
 
 3. **TypeScript Types**:
-   - `api` object contains all your functions with full type safety
-   - `Id<'tableName'>` is the type for document IDs
-   - All types are auto-generated from your schema
+    - `api` object contains all your functions with full type safety
+    - `Id<'tableName'>` is the type for document IDs
+    - All types are auto-generated from your schema
 
 ## Network Access Configuration
 
@@ -335,11 +340,11 @@ For local development with `npx convex dev`:
 
 ```json
 {
-  "networkAccess": {
-    "allowedDomains": ["*"],
-    "devAllowedDomains": ["ws://localhost:3210"],
-    "reasoning": "Access to Convex API for data storage."
-  }
+	"networkAccess": {
+		"allowedDomains": ["*"],
+		"devAllowedDomains": ["ws://localhost:3210"],
+		"reasoning": "Access to Convex API for data storage."
+	}
 }
 ```
 
@@ -349,15 +354,15 @@ For production deployments, you can be more specific:
 
 ```json
 {
-  "networkAccess": {
-    "allowedDomains": [
-      "https://*.convex.cloud",
-      "https://*.convex.site",
-      "wss://*.convex.cloud",
-      "wss://*.convex.site"
-    ],
-    "reasoning": "Access to Convex cloud API for data storage."
-  }
+	"networkAccess": {
+		"allowedDomains": [
+			"https://*.convex.cloud",
+			"https://*.convex.site",
+			"wss://*.convex.cloud",
+			"wss://*.convex.site"
+		],
+		"reasoning": "Access to Convex cloud API for data storage."
+	}
 }
 ```
 
@@ -381,7 +386,7 @@ const addTodo = useMutation(api.todos.add);
 
 // ✅ Correct
 const convex = useConvexClient();
-await convex.mutation(api.todos.add, { text: "..." });
+await convex.mutation(api.todos.add, { text: '...' });
 ```
 
 ### 3. Error: "CONVEX_URL not set"
@@ -389,6 +394,7 @@ await convex.mutation(api.todos.add, { text: "..." });
 **Problem**: Environment variable not loaded.
 
 **Solutions**:
+
 - Run `npx convex dev` to generate `.env.local`
 - Restart your dev server after running `npx convex dev`
 - Check that `.env.local` contains `VITE_CONVEX_URL=...`
@@ -404,7 +410,8 @@ await convex.mutation(api.todos.add, { text: "..." });
 
 **Problem**: Convex hasn't generated TypeScript types yet.
 
-**Solution**: 
+**Solution**:
+
 - Run `npx convex dev` at least once
 - The `src/convex/_generated` folder should be created automatically
 - If it's missing, check that `convex.json` is configured correctly
@@ -414,6 +421,7 @@ await convex.mutation(api.todos.add, { text: "..." });
 **Problem**: This shouldn't happen - queries auto-update.
 
 **Solutions**:
+
 - Check that your mutation is actually completing (no errors)
 - Verify the mutation is writing to the correct table
 - Check browser console for errors
@@ -461,11 +469,11 @@ Always define schemas with validation:
 
 ```typescript
 export default defineSchema({
-  todos: defineTable({
-    text: v.string(),        // Required string
-    completed: v.boolean(),  // Required boolean
-    createdAt: v.number(),   // Optional: v.optional(v.number())
-  }),
+	todos: defineTable({
+		text: v.string(), // Required string
+		completed: v.boolean(), // Required boolean
+		createdAt: v.number(), // Optional: v.optional(v.number())
+	}),
 });
 ```
 
@@ -562,7 +570,7 @@ const query = useQuery(api.todos.get, {});
 ```typescript
 // In a Svelte component
 const convex = useConvexClient();
-await convex.mutation(api.todos.add, { text: "..." });
+await convex.mutation(api.todos.add, { text: '...' });
 ```
 
 #### Convex Functions
@@ -570,18 +578,18 @@ await convex.mutation(api.todos.add, { text: "..." });
 ```typescript
 // Query
 export const get = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db.query("todos").collect();
-  },
+	args: {},
+	handler: async (ctx) => {
+		return await ctx.db.query('todos').collect();
+	},
 });
 
 // Mutation
 export const add = mutation({
-  args: { text: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db.insert("todos", { text: args.text });
-  },
+	args: { text: v.string() },
+	handler: async (ctx, args) => {
+		return await ctx.db.insert('todos', { text: args.text });
+	},
 });
 ```
 
@@ -601,10 +609,10 @@ If something isn't working:
 ## Version Information
 
 This guide was created for:
+
 - **Plugma**: ^2.2.3
 - **Svelte**: ^5.0.5
 - **Convex**: ^1.29.0
 - **convex-svelte**: ^0.0.12
 
 If you're using different versions, some APIs may differ. Refer to the official documentation for your specific versions.
-
