@@ -1,0 +1,14 @@
+{
+	"documentAccess": "dynamic-page",
+	"api": "1.0.0",
+	"networkAccess": {
+		"allowedDomains": ["*"],
+		"devAllowedDomains": ["ws://localhost:3210"],
+		"reasoning": "This plugin needs to access the Convex API to save and retrieve todos."
+	},
+	"id": "com.Figma Convex",
+	"name": "Figma Convex",
+	"main": "src/main/main.ts",
+	"ui": "src/ui/ui.ts",
+	"editorType": ["figma", "figjam"]
+}
