@@ -1,9 +1,13 @@
 import { mount } from 'svelte';
 import './styles.css';
-import ConvexProvider from './ConvexProvider.svelte';
+import QueryProvider from './QueryProvider.svelte';
+import { setupConvex } from './convexSetup'; // Or import setupSupabase, setupFirebase, etc.
 
-const app = mount(ConvexProvider, {
+const app = mount(QueryProvider, {
 	target: document.getElementById('app')!,
+	props: {
+		setup: setupConvex, // Pass setup function as prop
+	},
 });
 
 export default app;

@@ -77,8 +77,11 @@ src/
 │   ├── main.ts                      # Plugin entry point
 │   └── setupClientStorage.ts        # Storage handler for cache
 ├── ui/
+│   ├── ui.ts                        # Entry point - imports backend setup
 │   ├── QueryProvider.svelte         # 🔌 Backend-agnostic caching
-│   ├── ConvexProvider.svelte        # Convex-specific setup
+│   ├── convexSetup.ts               # Convex initialization
+│   ├── supabaseSetup.ts.example     # Supabase example
+│   ├── firebaseSetup.ts.example     # Firebase example
 │   ├── App.svelte                   # Your app
 │   ├── components/
 │   └── utils/
@@ -90,14 +93,26 @@ src/
 
 ### Key Components
 
+#### `ui.ts` - Entry Point
+Imports backend setup function and mounts `QueryProvider`:
+```typescript
+import { setupConvex } from './convexSetup';  // ← Swap this to change backends!
+mount(QueryProvider, {
+  target: document.getElementById('app')!,
+  props: { setup: setupConvex },  // ← Pass setup function as prop
+});
+```
+
 #### `QueryProvider.svelte` - The Magic ✨
 **Backend-agnostic** TanStack Query setup with:
 - Automatic cache restoration (~10-50ms)
 - Persistent storage via Figma's `clientStorage`
 - Zero-config caching for any data source
+- Accepts optional `setup` prop for backend initialization
+- No nesting required!
 
-#### `ConvexProvider.svelte` - Backend Wrapper
-Convex-specific setup that uses `QueryProvider`. **Easily swap** for your own provider!
+#### `*Setup.ts` - Backend Initialization
+Simple files that export setup functions. **Just swap which function you pass** to change backends!
 
 ## 💡 How It Works
 
@@ -114,42 +129,69 @@ Plugin opens → Restore cache (~10-50ms) → Show data instantly!
 
 **Result**: After first use, plugin feels instant! 🚀
 
-## 🔄 Using Different Backends
+## 🔄 Switching Backends (Super Easy!)
 
-The template is designed to work with **any** backend. The caching layer (`QueryProvider`) is completely independent.
+The template is designed to work with **any** backend. Just change which setup function you pass!
 
-### Current: Convex
-```svelte
-<script>
-  import { setupConvex } from 'convex-svelte';
-  setupConvex(CONVEX_URL);
-</script>
+In `src/ui/ui.ts`, swap the backend setup function:
 
-<QueryProvider>
-  <App />
-</QueryProvider>
+```typescript
+// Current: Convex
+import { setupConvex } from './convexSetup';
+mount(QueryProvider, {
+  target: document.getElementById('app')!,
+  props: { setup: setupConvex },
+});
+
+// Switch to Supabase
+import { setupSupabase } from './supabaseSetup';
+mount(QueryProvider, {
+  props: { setup: setupSupabase },  // ← Just change this!
+});
+
+// Switch to Firebase  
+import { setupFirebase } from './firebaseSetup';
+mount(QueryProvider, {
+  props: { setup: setupFirebase },  // ← Or this!
+});
+
+// REST API? No setup needed - just omit the prop!
+mount(QueryProvider, {
+  target: document.getElementById('app')!,
+  // No setup prop needed
+});
 ```
 
-### Switch to Supabase
-```svelte
-<script>
-  import { createClient } from '@supabase/supabase-js';
+### Backend Setup Files
+
+Each backend has its own simple setup file that exports a function:
+
+**`convexSetup.ts`** (included)
+```typescript
+export function setupConvex() {
+  setupConvexClient(CONVEX_URL);
+}
+```
+
+**`supabaseSetup.ts`** (see example file)
+```typescript
+export function setupSupabase() {
   const supabase = createClient(...);
-  setContext('supabase', supabase);
-</script>
-
-<QueryProvider>
-  <App />
-</QueryProvider>
+  (window as any).supabase = supabase;
+}
 ```
 
-### Switch to REST API
-```svelte
-<QueryProvider>
-  <App />
-</QueryProvider>
-<!-- Just use fetch() in your queries! -->
+**`firebaseSetup.ts`** (see example file)
+```typescript
+export function setupFirebase() {
+  const app = initializeApp(config);
+  (window as any).firebase = { app, db };
+}
 ```
+
+Example setup files are included! See `*.example` files in `src/ui/`.
+
+**That's it!** The caching layer (`QueryProvider`) works identically with all backends.
 
 See [QUERY_PROVIDER_SETUP.md](./QUERY_PROVIDER_SETUP.md) for complete examples.
 

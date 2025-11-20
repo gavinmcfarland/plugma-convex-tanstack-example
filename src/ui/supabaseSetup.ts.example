@@ -1,0 +1,44 @@
+/**
+ * Supabase Backend Setup Example
+ * 
+ * To use Supabase instead of Convex:
+ * 1. Rename this file to supabaseSetup.ts
+ * 2. In ui.ts, change:
+ *    import { setupConvex } from './convexSetup'
+ *    to
+ *    import { setupSupabase } from './supabaseSetup'
+ * 3. In ui.ts, pass setupSupabase to QueryProvider:
+ *    mount(QueryProvider, { target: ..., props: { setup: setupSupabase } })
+ * 4. Install: pnpm add @supabase/supabase-js
+ * 5. Set environment variables in .env.local:
+ *    VITE_SUPABASE_URL=your-project-url
+ *    VITE_SUPABASE_ANON_KEY=your-anon-key
+ */
+
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+/**
+ * Initialize Supabase client
+ * Called during QueryProvider component initialization
+ */
+export function setupSupabase() {
+	if (SUPABASE_URL && SUPABASE_KEY) {
+		const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+		
+		// Make available globally or via context
+		// Option 1: Global (simple)
+		(window as any).supabase = supabase;
+		
+		// Option 2: Use Svelte context if needed
+		// import { setContext } from 'svelte';
+		// setContext('supabase', supabase);
+		
+		console.log('[Supabase] Initialized');
+	} else {
+		console.warn('Supabase credentials not set. Check your .env.local file.');
+	}
+}
+

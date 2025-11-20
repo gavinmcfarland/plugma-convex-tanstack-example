@@ -1,0 +1,48 @@
+/**
+ * Firebase Backend Setup Example
+ * 
+ * To use Firebase instead of Convex:
+ * 1. Rename this file to firebaseSetup.ts
+ * 2. In ui.ts, change:
+ *    import { setupConvex } from './convexSetup'
+ *    to
+ *    import { setupFirebase } from './firebaseSetup'
+ * 3. In ui.ts, pass setupFirebase to QueryProvider:
+ *    mount(QueryProvider, { target: ..., props: { setup: setupFirebase } })
+ * 4. Install: pnpm add firebase
+ * 5. Set environment variables in .env.local with your Firebase config
+ */
+
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+
+const firebaseConfig = {
+	apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+	authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+	projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+	storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+	messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+	appId: import.meta.env.VITE_FIREBASE_APP_ID,
+};
+
+/**
+ * Initialize Firebase
+ * Called during QueryProvider component initialization
+ */
+export function setupFirebase() {
+	if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+		// Initialize Firebase
+		const app = initializeApp(firebaseConfig);
+		const db = getFirestore(app);
+		const auth = getAuth(app);
+
+		// Make available globally
+		(window as any).firebase = { app, db, auth };
+
+		console.log('[Firebase] Initialized');
+	} else {
+		console.warn('Firebase credentials not set. Check your .env.local file.');
+	}
+}
+

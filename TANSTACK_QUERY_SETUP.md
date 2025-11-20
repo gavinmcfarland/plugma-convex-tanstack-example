@@ -761,32 +761,49 @@ export function createFigmaStoragePersistor(): Persister {
 {/if}
 ```
 
-### 4. Convex Provider (`src/ui/ConvexProvider.svelte`)
+### 4. Convex Setup (`src/ui/convexSetup.ts`)
 
-**Convex-specific setup** that wraps QueryProvider:
+**Convex-specific initialization function**:
 
-```svelte
-<script lang="ts">
-  import { setupConvex } from 'convex-svelte';
-  import { CONVEX_URL } from './convex';
-  import QueryProvider from './QueryProvider.svelte';
-  import App from './App.svelte';
+```typescript
+import { setupConvex as setupConvexClient } from 'convex-svelte';
+import { CONVEX_URL } from './convex';
 
-  // Set up Convex client
+export function setupConvex() {
   if (CONVEX_URL) {
-    setupConvex(CONVEX_URL);
+    setupConvexClient(CONVEX_URL);
+    console.log('[Convex] Initialized');
+  } else {
+    console.warn('CONVEX_URL not set. Please run "npx convex dev".');
   }
-</script>
-
-<!-- QueryProvider handles TanStack Query + cache persistence -->
-<QueryProvider>
-  <App />
-</QueryProvider>
+}
 ```
 
-**✨ This modular design means `QueryProvider` can be reused with any backend!**
+### 5. Entry Point (`src/ui/ui.ts`)
 
-### 5. Using Queries (`src/ui/App.svelte`)
+**Wire everything together**:
+
+```typescript
+import { mount } from 'svelte';
+import './styles.css';
+import QueryProvider from './QueryProvider.svelte';
+import { setupConvex } from './convexSetup';  // ← Import setup function
+
+const app = mount(QueryProvider, {
+  target: document.getElementById('app')!,
+  props: {
+    setup: setupConvex,  // ← Pass as prop (runs during component init)
+  },
+});
+
+export default app;
+```
+
+**✨ To switch backends, just change which setup function you pass! No nesting, no provider wrappers needed.**
+
+**Why pass as prop?** Some backends (like Convex) need to run during Svelte's component initialization to use `setContext`. By passing the setup function as a prop, it runs at the right time in the component lifecycle.
+
+### 6. Using Queries (`src/ui/App.svelte`)
 
 ```svelte
 <script lang="ts">
