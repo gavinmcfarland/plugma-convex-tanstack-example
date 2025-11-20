@@ -51,16 +51,16 @@ import './styles.css';
 import QueryProvider from './QueryProvider.svelte';
 
 // Import your backend setup function (swap this line to change backends!)
-import { setupConvex } from './convexSetup';      // For Convex
+import { setupConvex } from './convexSetup'; // For Convex
 // import { setupSupabase } from './supabaseSetup';  // For Supabase
 // import { setupFirebase } from './firebaseSetup';  // For Firebase
 // Pass undefined for REST APIs - no setup needed!
 
 const app = mount(QueryProvider, {
-  target: document.getElementById('app')!,
-  props: {
-    setup: setupConvex,  // Pass setup function as prop (or undefined for REST APIs)
-  },
+	target: document.getElementById('app')!,
+	props: {
+		setup: setupConvex, // Pass setup function as prop (or undefined for REST APIs)
+	},
 });
 
 export default app;
@@ -81,10 +81,10 @@ import { setupConvex as setupConvexClient } from 'convex-svelte';
 import { CONVEX_URL } from './convex';
 
 export function setupConvex() {
-  if (CONVEX_URL) {
-    setupConvexClient(CONVEX_URL);
-    console.log('[Convex] Initialized');
-  }
+	if (CONVEX_URL) {
+		setupConvexClient(CONVEX_URL);
+		console.log('[Convex] Initialized');
+	}
 }
 ```
 
@@ -93,8 +93,8 @@ Then in `src/ui/ui.ts`:
 ```typescript
 import { setupConvex } from './convexSetup';
 mount(QueryProvider, {
-  target: document.getElementById('app')!,
-  props: { setup: setupConvex },  // Pass as prop
+	target: document.getElementById('app')!,
+	props: { setup: setupConvex }, // Pass as prop
 });
 ```
 
@@ -137,17 +137,17 @@ Create `src/ui/supabaseSetup.ts`:
 import { createClient } from '@supabase/supabase-js';
 
 export function setupSupabase() {
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-  const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+	const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+	const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-  if (SUPABASE_URL && SUPABASE_KEY) {
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-    
-    // Make available globally (or use Svelte context)
-    (window as any).supabase = supabase;
-    
-    console.log('[Supabase] Initialized');
-  }
+	if (SUPABASE_URL && SUPABASE_KEY) {
+		const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+		// Make available globally (or use Svelte context)
+		(window as any).supabase = supabase;
+
+		console.log('[Supabase] Initialized');
+	}
 }
 ```
 
@@ -156,8 +156,8 @@ Then in `src/ui/ui.ts`:
 ```typescript
 import { setupSupabase } from './supabaseSetup';
 mount(QueryProvider, {
-  target: document.getElementById('app')!,
-  props: { setup: setupSupabase },  // Pass as prop
+	target: document.getElementById('app')!,
+	props: { setup: setupSupabase }, // Pass as prop
 });
 ```
 
@@ -224,19 +224,19 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
 export function setupFirebase() {
-  const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    // ... other config
-  };
+	const firebaseConfig = {
+		apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+		projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+		// ... other config
+	};
 
-  if (firebaseConfig.apiKey && firebaseConfig.projectId) {
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    
-    (window as any).firebase = { app, db };
-    console.log('[Firebase] Initialized');
-  }
+	if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+		const app = initializeApp(firebaseConfig);
+		const db = getFirestore(app);
+
+		(window as any).firebase = { app, db };
+		console.log('[Firebase] Initialized');
+	}
 }
 ```
 
@@ -245,8 +245,8 @@ Then in `src/ui/ui.ts`:
 ```typescript
 import { setupFirebase } from './firebaseSetup';
 mount(QueryProvider, {
-  target: document.getElementById('app')!,
-  props: { setup: setupFirebase },  // Pass as prop
+	target: document.getElementById('app')!,
+	props: { setup: setupFirebase }, // Pass as prop
 });
 ```
 
@@ -605,12 +605,12 @@ That's it! The caching layer stays the same, only the data source changes.
 
 ### Quick Migration Guide
 
-| From | To | Steps |
-|------|----|----|
+| From   | To       | Steps                                                                                                                                                                             |
+| ------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Convex | Supabase | 1. Create `supabaseSetup.ts` with `setupSupabase` function<br>2. Change import in `ui.ts`<br>3. Pass `setupSupabase` to QueryProvider<br>4. Update queries to use Supabase client |
-| Convex | Firebase | 1. Create `firebaseSetup.ts` with `setupFirebase` function<br>2. Change import in `ui.ts`<br>3. Pass `setupFirebase` to QueryProvider<br>4. Update queries to use Firebase SDK |
-| Convex | REST API | 1. Remove setup function from QueryProvider props<br>2. Update queries to use `fetch()` |
-| Any | Any | Just swap which setup function you pass to QueryProvider! |
+| Convex | Firebase | 1. Create `firebaseSetup.ts` with `setupFirebase` function<br>2. Change import in `ui.ts`<br>3. Pass `setupFirebase` to QueryProvider<br>4. Update queries to use Firebase SDK    |
+| Convex | REST API | 1. Remove setup function from QueryProvider props<br>2. Update queries to use `fetch()`                                                                                           |
+| Any    | Any      | Just swap which setup function you pass to QueryProvider!                                                                                                                         |
 
 ---
 
