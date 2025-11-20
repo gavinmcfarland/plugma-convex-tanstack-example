@@ -1,16 +1,6 @@
-# Figma Plugin Template (Svelte + TanStack Query + Convex)
+# Plugma + Convex + Tanstack
 
-A modern, production-ready Figma plugin template with **instant loading** and persistent caching.
-
-## ✨ Key Features
-
-- ⚡ **Instant Loading** - Data appears immediately on subsequent plugin opens (no loading spinners!)
-- 💾 **Persistent Caching** - Uses Figma's `clientStorage` for automatic cache persistence
-- 🔄 **Background Refresh** - Fresh data loads silently while showing cached data
-- 🎨 **Modern Stack** - Svelte 5 + TanStack Query + Convex
-- 🔌 **Backend Flexible** - Easily swap Convex for Supabase, Firebase, or any backend
-- 📦 **Type-safe** - Full TypeScript support
-- 🎯 **Production Ready** - Battle-tested patterns and error handling
+An example Todo Figma plugin using Plugma for plugin developement, Convex for database and Tanstack for persistent storage.
 
 ## 🚀 Quick Start
 
@@ -22,28 +12,33 @@ A modern, production-ready Figma plugin template with **instant loading** and pe
 ### Setup
 
 1. **Install Dependencies**
-   ```bash
-   pnpm install
-   ```
 
-2. **Set Up Backend** (Convex example)
-   ```bash
-   npx convex dev
-   ```
-   See [CONVEX_SETUP.md](./CONVEX_SETUP.md) for details.
+    ```bash
+    pnpm install
+    ```
+
+2. **Set Up Backend**
+
+    ```bash
+    npx convex dev
+    ```
+
+    See [CONVEX_SETUP.md](./CONVEX_SETUP.md) for details.
 
 3. **Run Development**
-   ```bash
-   pnpm dev
-   ```
-   Changes rebuild automatically to `dist/` on save.
+
+    ```bash
+    pnpm dev
+    ```
+
+    Changes rebuild automatically to `dist/` on save.
 
 4. **Import in Figma**
-   - Open Figma desktop app
-   - Press `Cmd/Ctrl + K` → Search "Import plugin from manifest…"
-   - Select `dist/manifest.json`
-   
-   Keep dev server running for instant reloads!
+    - Open Figma desktop app
+    - Press `Cmd/Ctrl + K` → Search "Import plugin from manifest…"
+    - Select `dist/manifest.json`
+
+    Keep dev server running for instant reloads!
 
 ### Build for Production
 
@@ -56,12 +51,15 @@ The optimized build in `dist/` is ready to publish.
 ## 📚 Documentation
 
 ### Core Setup
+
 - **[TanStack Query + Convex Setup](./TANSTACK_QUERY_SETUP.md)** - Complete guide for this template
 - **[Generic Query Provider Setup](./QUERY_PROVIDER_SETUP.md)** - Use with ANY backend (Supabase, Firebase, REST, etc.)
 - **[Convex Setup](./CONVEX_SETUP.md)** - Convex-specific configuration
 
 ### Integration Examples
+
 See [QUERY_PROVIDER_SETUP.md](./QUERY_PROVIDER_SETUP.md) for examples with:
+
 - ✅ Convex (included in template)
 - ✅ Supabase
 - ✅ Firebase
@@ -80,8 +78,6 @@ src/
 │   ├── ui.ts                        # Entry point - imports backend setup
 │   ├── QueryProvider.svelte         # 🔌 Backend-agnostic caching
 │   ├── convexSetup.ts               # Convex initialization
-│   ├── supabaseSetup.ts.example     # Supabase example
-│   ├── firebaseSetup.ts.example     # Firebase example
 │   ├── App.svelte                   # Your app
 │   ├── components/
 │   └── utils/
@@ -94,41 +90,48 @@ src/
 ### Key Components
 
 #### `ui.ts` - Entry Point
+
 Imports your app and backend setup, then mounts `QueryProvider`:
+
 ```typescript
 import App from './App.svelte';
-import { setupConvex } from './convexSetup';  // ← Swap this to change backends!
+import { setupConvex } from './convexSetup'; // ← Swap this to change backends!
 mount(QueryProvider, {
-  target: document.getElementById('app')!,
-  props: {
-    setup: setupConvex,  // ← Backend initialization
-    component: App,      // ← Your app component
-  },
+	target: document.getElementById('app')!,
+	props: {
+		setup: setupConvex, // ← Backend initialization
+		app: App, // ← Your app component
+	},
 });
 ```
 
 #### `QueryProvider.svelte` - The Magic ✨
+
 **Completely generic** TanStack Query provider with:
+
 - Automatic cache restoration (~10-50ms)
 - Persistent storage via Figma's `clientStorage`
 - Zero-config caching for any data source
 - Accepts optional `setup` prop for backend initialization
-- Accepts `component` prop to render your app
+- Accepts `app` prop to render your app
 - No coupling to specific backends or apps!
 
 #### `*Setup.ts` - Backend Initialization
+
 Simple files that export setup functions. **Just swap which function you pass** to change backends!
 
 ## 💡 How It Works
 
 ### First Load (No Cache)
+
 ```
 Plugin opens → Fetch from backend → Show data → Save to cache
 ```
 
 ### Subsequent Loads (With Cache)
+
 ```
-Plugin opens → Restore cache (~10-50ms) → Show data instantly! 
+Plugin opens → Restore cache (~10-50ms) → Show data instantly!
               ↳ Background: Fetch fresh data → Update if changed
 ```
 
@@ -146,37 +149,37 @@ import App from './App.svelte';
 // Current: Convex
 import { setupConvex } from './convexSetup';
 mount(QueryProvider, {
-  target: document.getElementById('app')!,
-  props: {
-    setup: setupConvex,
-    component: App,
-  },
+	target: document.getElementById('app')!,
+	props: {
+		setup: setupConvex,
+		app: App,
+	},
 });
 
 // Switch to Supabase
 import { setupSupabase } from './supabaseSetup';
 mount(QueryProvider, {
-  props: {
-    setup: setupSupabase,  // ← Just change this!
-    component: App,
-  },
+	props: {
+		setup: setupSupabase, // ← Just change this!
+		app: App,
+	},
 });
 
-// Switch to Firebase  
+// Switch to Firebase
 import { setupFirebase } from './firebaseSetup';
 mount(QueryProvider, {
-  props: {
-    setup: setupFirebase,  // ← Or this!
-    component: App,
-  },
+	props: {
+		setup: setupFirebase, // ← Or this!
+		app: App,
+	},
 });
 
 // REST API? No setup needed - just omit the setup prop!
 mount(QueryProvider, {
-  target: document.getElementById('app')!,
-  props: {
-    component: App,
-  },
+	target: document.getElementById('app')!,
+	props: {
+		app: App,
+	},
 });
 ```
 
@@ -185,13 +188,15 @@ mount(QueryProvider, {
 Each backend has its own simple setup file that exports a function:
 
 **`convexSetup.ts`** (included)
+
 ```typescript
 export function setupConvex() {
-  setupConvexClient(CONVEX_URL);
+	setupConvexClient(CONVEX_URL);
 }
 ```
 
 **`supabaseSetup.ts`** (see example file)
+
 ```typescript
 export function setupSupabase() {
   const supabase = createClient(...);
@@ -200,10 +205,11 @@ export function setupSupabase() {
 ```
 
 **`firebaseSetup.ts`** (see example file)
+
 ```typescript
 export function setupFirebase() {
-  const app = initializeApp(config);
-  (window as any).firebase = { app, db };
+	const app = initializeApp(config);
+	(window as any).firebase = { app, db };
 }
 ```
 
@@ -237,11 +243,13 @@ npx convex dev       # Run Convex backend
 ## 🌟 Why This Template?
 
 Most Figma plugin templates don't handle caching well, leading to:
+
 - ❌ Slow loading on every plugin open
 - ❌ Flickering loading states
 - ❌ Poor user experience
 
 This template provides:
+
 - ✅ **Instant loading** after first use
 - ✅ **No loading spinner flash** on cached loads
 - ✅ **Always fresh data** via background refresh

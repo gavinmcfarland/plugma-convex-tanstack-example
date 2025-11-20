@@ -14,10 +14,10 @@
 		/**
 		 * Your app component to render once the cache is restored
 		 */
-		component: Component;
+		app: Component;
 	}
 
-	let { setup, component: AppComponent }: Props = $props();
+	let { setup, app: AppComponent }: Props = $props();
 
 	// Run backend setup if provided (must be during component init for Svelte context)
 	setup?.();

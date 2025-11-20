@@ -8,7 +8,7 @@ const app = mount(QueryProvider, {
 	target: document.getElementById('app')!,
 	props: {
 		setup: setupConvex, // Pass setup function as prop
-		component: App, // Pass your app component
+		app: App, // Pass your app component
 	},
 });
 

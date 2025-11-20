@@ -794,7 +794,7 @@ const app = mount(QueryProvider, {
   target: document.getElementById('app')!,
   props: {
     setup: setupConvex,  // ← Pass as prop (runs during component init)
-    component: App,      // ← Pass your app component
+    app: App,            // ← Pass your app component
   },
 });
 
@@ -808,7 +808,7 @@ export default app;
 
 **Why pass as props?**
 - **`setup`**: Some backends (like Convex) need to run during Svelte's component initialization to use `setContext`. By passing the setup function as a prop, it runs at the right time in the component lifecycle.
-- **`component`**: Makes `QueryProvider` completely generic and reusable - it doesn't need to know about your specific app!
+- **`app`**: Makes `QueryProvider` completely generic and reusable - it doesn't need to know about your specific app!
 
 ### 6. Using Queries (`src/ui/App.svelte`)
 

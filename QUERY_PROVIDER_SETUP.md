@@ -61,7 +61,7 @@ const app = mount(QueryProvider, {
 	target: document.getElementById('app')!,
 	props: {
 		setup: setupConvex, // Pass setup function as prop (or undefined for REST APIs)
-		component: App, // Pass your app component
+		app: App, // Pass your app component
 	},
 });
 
@@ -101,7 +101,7 @@ mount(QueryProvider, {
 	target: document.getElementById('app')!,
 	props: {
 		setup: setupConvex,
-		component: App,
+		app: App,
 	},
 });
 ```
@@ -169,7 +169,7 @@ mount(QueryProvider, {
 	target: document.getElementById('app')!,
 	props: {
 		setup: setupSupabase,
-		component: App,
+		app: App,
 	},
 });
 ```
@@ -263,7 +263,7 @@ mount(QueryProvider, {
 	target: document.getElementById('app')!,
 	props: {
 		setup: setupFirebase,
-		component: App,
+		app: App,
 	},
 });
 ```
@@ -609,7 +609,7 @@ import { setupConvex } from './convexSetup';
 mount(QueryProvider, {
 	props: {
 		setup: setupConvex,
-		component: App,
+		app: App,
 	},
 });
 
@@ -618,7 +618,7 @@ import { setupSupabase } from './supabaseSetup';
 mount(QueryProvider, {
 	props: {
 		setup: setupSupabase,
-		component: App,
+		app: App,
 	},
 });
 
@@ -627,14 +627,14 @@ import { setupFirebase } from './firebaseSetup';
 mount(QueryProvider, {
 	props: {
 		setup: setupFirebase,
-		component: App,
+		app: App,
 	},
 });
 
 // To REST API (no setup needed)
 mount(QueryProvider, {
 	props: {
-		component: App,
+		app: App,
 	},
 });
 ```
