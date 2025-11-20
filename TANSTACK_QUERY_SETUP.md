@@ -17,6 +17,7 @@ This setup provides **instant loading** for your Figma plugin:
 ## Why TanStack Query?
 
 TanStack Query provides:
+
 - ✅ **Automatic caching** - Data is cached and reused across components
 - ✅ **Background refetching** - Keeps data fresh automatically
 - ✅ **Request deduplication** - Multiple components requesting the same data only trigger one fetch
@@ -28,6 +29,7 @@ TanStack Query provides:
 ## How Cache Persistence Works
 
 ### First Load (No Cache)
+
 1. Plugin opens → Cache restoration returns empty
 2. App renders → TanStack Query shows "pending" state
 3. Loading spinner appears
@@ -35,6 +37,7 @@ TanStack Query provides:
 5. Data displays and is saved to `clientStorage`
 
 ### Subsequent Loads (With Cache)
+
 1. Plugin opens → Cache restoration starts (~10-50ms)
 2. **App waits** to render until restoration completes
 3. Cached queries are hydrated into TanStack Query
@@ -44,6 +47,7 @@ TanStack Query provides:
 7. Updated cache is persisted automatically
 
 ### Key Benefits
+
 - ✅ **Zero flash**: Loading spinner never appears on cached loads
 - ✅ **Instant display**: Data appears immediately after imperceptible cache restoration
 - ✅ **Always fresh**: Background refetch ensures data is up-to-date
@@ -89,7 +93,7 @@ In your root component (`ConvexProvider.svelte`):
   onMount(async () => {
     // 1. Restore cache from storage first
     const restoredState = await persister.restoreClient();
-    
+
     if (restoredState && restoredState.clientState) {
       // 2. Hydrate all queries into the QueryClient
       const queries = restoredState.clientState.queries || [];
@@ -121,6 +125,7 @@ In your root component (`ConvexProvider.svelte`):
 ```
 
 **Key Points:**
+
 - ⚠️ We wait to render the app until cache restoration completes
 - This prevents the loading spinner from flashing briefly
 - Cache restoration is fast (~10-50ms) and imperceptible
@@ -136,57 +141,54 @@ import type { PersistedClient, Persister } from '@tanstack/query-persist-client-
 const CACHE_KEY = 'tanstack_query_cache';
 
 export function createFigmaStoragePersistor(): Persister {
-  return {
-    async persistClient(client: PersistedClient) {
-      parent.postMessage(
-        {
-          pluginMessage: {
-            type: 'set-storage',
-            key: CACHE_KEY,
-            value: client,
-          },
-        },
-        '*'
-      );
-    },
+	return {
+		async persistClient(client: PersistedClient) {
+			parent.postMessage(
+				{
+					pluginMessage: {
+						type: 'set-storage',
+						key: CACHE_KEY,
+						value: client,
+					},
+				},
+				'*',
+			);
+		},
 
-    async restoreClient(): Promise<PersistedClient | undefined> {
-      return new Promise((resolve) => {
-        const handleMessage = (event: MessageEvent) => {
-          const msg = event.data.pluginMessage;
-          if (msg?.type === 'storage-data' && msg.key === CACHE_KEY) {
-            window.removeEventListener('message', handleMessage);
-            resolve(msg.value || undefined);
-          }
-        };
+		async restoreClient(): Promise<PersistedClient | undefined> {
+			return new Promise((resolve) => {
+				const handleMessage = (event: MessageEvent) => {
+					const msg = event.data.pluginMessage;
+					if (msg?.type === 'storage-data' && msg.key === CACHE_KEY) {
+						window.removeEventListener('message', handleMessage);
+						resolve(msg.value || undefined);
+					}
+				};
 
-        window.addEventListener('message', handleMessage);
-        parent.postMessage(
-          { pluginMessage: { type: 'get-storage', key: CACHE_KEY } },
-          '*'
-        );
+				window.addEventListener('message', handleMessage);
+				parent.postMessage({ pluginMessage: { type: 'get-storage', key: CACHE_KEY } }, '*');
 
-        // Timeout after 500ms
-        setTimeout(() => {
-          window.removeEventListener('message', handleMessage);
-          resolve(undefined);
-        }, 500);
-      });
-    },
+				// Timeout after 500ms
+				setTimeout(() => {
+					window.removeEventListener('message', handleMessage);
+					resolve(undefined);
+				}, 500);
+			});
+		},
 
-    async removeClient() {
-      parent.postMessage(
-        {
-          pluginMessage: {
-            type: 'set-storage',
-            key: CACHE_KEY,
-            value: null,
-          },
-        },
-        '*'
-      );
-    },
-  };
+		async removeClient() {
+			parent.postMessage(
+				{
+					pluginMessage: {
+						type: 'set-storage',
+						key: CACHE_KEY,
+						value: null,
+					},
+				},
+				'*',
+			);
+		},
+	};
 }
 ```
 
@@ -199,8 +201,8 @@ Ensure your plugin main file handles storage messages (this should already be se
 import { setupClientStorage } from './setupClientStorage';
 
 export default function () {
-  figma.showUI(__html__, { width: 300, height: 400 });
-  setupClientStorage(); // Handles get-storage and set-storage messages
+	figma.showUI(__html__, { width: 300, height: 400 });
+	setupClientStorage(); // Handles get-storage and set-storage messages
 }
 ```
 
@@ -255,7 +257,7 @@ After mutations, invalidate queries to trigger a refetch and update the cache:
 
   async function addTodo(text: string) {
     await convex.mutation(api.todos.add, { text });
-    
+
     // Invalidate and refetch - cache will auto-persist after update
     queryClient.invalidateQueries({ queryKey: ['todos'] });
   }
@@ -269,6 +271,7 @@ After mutations, invalidate queries to trigger a refetch and update the cache:
 ```
 
 **Important**: Always invalidate queries after mutations to ensure:
+
 - ✅ UI updates with fresh data
 - ✅ Cache is updated automatically
 - ✅ Next plugin open shows latest data
@@ -301,7 +304,7 @@ For better mutation handling with loading/error states:
   }
 </script>
 
-<button 
+<button
   onclick={() => handleAdd('New todo')}
   disabled={addTodoMutation.isPending}
 >
@@ -319,13 +322,13 @@ Query keys are used to identify and cache queries. Use descriptive arrays:
 
 ```typescript
 // Simple key
-queryKey: ['todos']
+queryKey: ['todos'];
 
 // With parameters
-queryKey: ['todos', { userId: '123' }]
+queryKey: ['todos', { userId: '123' }];
 
 // Hierarchical
-queryKey: ['projects', projectId, 'tasks']
+queryKey: ['projects', projectId, 'tasks'];
 ```
 
 ## Common Patterns
@@ -353,31 +356,29 @@ Update UI immediately, rollback on error:
 
 ```typescript
 const deleteTodoMutation = createMutation(() => ({
-  mutationFn: async (id: string) => {
-    return await convex.mutation(api.todos.remove, { id });
-  },
-  onMutate: async (id) => {
-    // Cancel outgoing refetches
-    await queryClient.cancelQueries({ queryKey: ['todos'] });
-    
-    // Snapshot previous value
-    const previousTodos = queryClient.getQueryData(['todos']);
-    
-    // Optimistically update
-    queryClient.setQueryData(['todos'], (old: any[]) => 
-      old.filter(todo => todo._id !== id)
-    );
-    
-    return { previousTodos };
-  },
-  onError: (err, id, context) => {
-    // Rollback on error
-    queryClient.setQueryData(['todos'], context.previousTodos);
-  },
-  onSettled: () => {
-    // Always refetch after error or success
-    queryClient.invalidateQueries({ queryKey: ['todos'] });
-  },
+	mutationFn: async (id: string) => {
+		return await convex.mutation(api.todos.remove, { id });
+	},
+	onMutate: async (id) => {
+		// Cancel outgoing refetches
+		await queryClient.cancelQueries({ queryKey: ['todos'] });
+
+		// Snapshot previous value
+		const previousTodos = queryClient.getQueryData(['todos']);
+
+		// Optimistically update
+		queryClient.setQueryData(['todos'], (old: any[]) => old.filter((todo) => todo._id !== id));
+
+		return { previousTodos };
+	},
+	onError: (err, id, context) => {
+		// Rollback on error
+		queryClient.setQueryData(['todos'], context.previousTodos);
+	},
+	onSettled: () => {
+		// Always refetch after error or success
+		queryClient.invalidateQueries({ queryKey: ['todos'] });
+	},
 }));
 ```
 
@@ -418,18 +419,18 @@ Adjust cache behavior per query or globally:
 
 ```typescript
 const todosQuery = createQuery(() => ({
-  queryKey: ['todos'],
-  queryFn: () => convex.query(api.todos.get, {}),
-  
-  // Cache configuration
-  staleTime: 1000 * 60 * 5,      // Consider data fresh for 5 minutes
-  gcTime: 1000 * 60 * 30,        // Keep unused data for 30 minutes
-  refetchOnMount: true,          // Refetch on component mount
-  refetchOnWindowFocus: false,   // Don't refetch on window focus
-  refetchOnReconnect: true,      // Refetch on network reconnect
-  refetchInterval: false,        // Or set to ms for polling
-  retry: 3,                      // Retry failed requests 3 times
-  retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+	queryKey: ['todos'],
+	queryFn: () => convex.query(api.todos.get, {}),
+
+	// Cache configuration
+	staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+	gcTime: 1000 * 60 * 30, // Keep unused data for 30 minutes
+	refetchOnMount: true, // Refetch on component mount
+	refetchOnWindowFocus: false, // Don't refetch on window focus
+	refetchOnReconnect: true, // Refetch on network reconnect
+	refetchInterval: false, // Or set to ms for polling
+	retry: 3, // Retry failed requests 3 times
+	retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
 }));
 ```
 
@@ -454,16 +455,16 @@ pnpm add @tanstack/svelte-query-devtools
 
 ## Benefits Over Custom Cache Helper
 
-| Feature | Custom Helper | TanStack Query |
-|---------|--------------|----------------|
-| Automatic refetching | ❌ Manual | ✅ Automatic |
-| Request deduplication | ❌ No | ✅ Yes |
-| Cache invalidation | ❌ Manual | ✅ Built-in |
-| Optimistic updates | ❌ Complex | ✅ Simple API |
-| Background sync | ❌ No | ✅ Yes |
-| DevTools | ❌ No | ✅ Yes |
-| Error retry | ❌ Manual | ✅ Built-in |
-| Stale-while-revalidate | ✅ Basic | ✅ Advanced |
+| Feature                | Custom Helper | TanStack Query |
+| ---------------------- | ------------- | -------------- |
+| Automatic refetching   | ❌ Manual     | ✅ Automatic   |
+| Request deduplication  | ❌ No         | ✅ Yes         |
+| Cache invalidation     | ❌ Manual     | ✅ Built-in    |
+| Optimistic updates     | ❌ Complex    | ✅ Simple API  |
+| Background sync        | ❌ No         | ✅ Yes         |
+| DevTools               | ❌ No         | ✅ Yes         |
+| Error retry            | ❌ Manual     | ✅ Built-in    |
+| Stale-while-revalidate | ✅ Basic      | ✅ Advanced    |
 
 ## Troubleshooting
 
@@ -514,6 +515,7 @@ ready = true;
 **Problem**: Cache isn't being saved to `clientStorage`.
 
 **Checklist**:
+
 1. ✅ Is `setupClientStorage()` called in your plugin main file?
 2. ✅ Is `persistQueryClient()` called after restoration?
 3. ✅ Check browser console for storage errors
@@ -527,9 +529,9 @@ ready = true;
 
 ```typescript
 async function addTodo(text: string) {
-  await convex.mutation(api.todos.add, { text });
-  // This triggers a refetch:
-  queryClient.invalidateQueries({ queryKey: ['todos'] });
+	await convex.mutation(api.todos.add, { text });
+	// This triggers a refetch:
+	queryClient.invalidateQueries({ queryKey: ['todos'] });
 }
 ```
 
@@ -578,13 +580,13 @@ const postsQuery = createQuery(() => ({
 
 ### Cache Behavior
 
-| Scenario | What Happens |
-|----------|--------------|
-| First open | Loading spinner → Fetch data → Save to cache |
-| Second open | Restore cache instantly → Show data → Refetch in background |
-| Mutation | Update server → Invalidate query → Refetch → Update cache |
-| Network error | Show cached data + error message |
-| Offline | Show cached data (up to 24 hours old) |
+| Scenario      | What Happens                                                |
+| ------------- | ----------------------------------------------------------- |
+| First open    | Loading spinner → Fetch data → Save to cache                |
+| Second open   | Restore cache instantly → Show data → Refetch in background |
+| Mutation      | Update server → Invalidate query → Refetch → Update cache   |
+| Network error | Show cached data + error message                            |
+| Offline       | Show cached data (up to 24 hours old)                       |
 
 ## Resources
 
@@ -602,6 +604,7 @@ const postsQuery = createQuery(() => ({
 If migrating from the custom `useClientCache` helper:
 
 ### Before (Custom Helper):
+
 ```svelte
 const cache = useClientCache(
   'todos_cache',
@@ -621,6 +624,7 @@ const cache = useClientCache(
 ```
 
 ### After (TanStack Query):
+
 ```svelte
 const todosQuery = createQuery(() => ({
   queryKey: ['todos'],
@@ -650,10 +654,10 @@ Here's the full implementation from this project:
 import { setupClientStorage } from './setupClientStorage';
 
 export default function () {
-  figma.showUI(__html__, { width: 300, height: 400, themeColors: true });
-  
-  // Handle storage for cache persistence
-  setupClientStorage();
+	figma.showUI(__html__, { width: 300, height: 400, themeColors: true });
+
+	// Handle storage for cache persistence
+	setupClientStorage();
 }
 ```
 
@@ -665,41 +669,35 @@ import type { PersistedClient, Persister } from '@tanstack/query-persist-client-
 const CACHE_KEY = 'tanstack_query_cache';
 
 export function createFigmaStoragePersistor(): Persister {
-  return {
-    async persistClient(client: PersistedClient) {
-      parent.postMessage(
-        { pluginMessage: { type: 'set-storage', key: CACHE_KEY, value: client } },
-        '*'
-      );
-    },
+	return {
+		async persistClient(client: PersistedClient) {
+			parent.postMessage({ pluginMessage: { type: 'set-storage', key: CACHE_KEY, value: client } }, '*');
+		},
 
-    async restoreClient(): Promise<PersistedClient | undefined> {
-      return new Promise((resolve) => {
-        const handleMessage = (event: MessageEvent) => {
-          const msg = event.data.pluginMessage;
-          if (msg?.type === 'storage-data' && msg.key === CACHE_KEY) {
-            window.removeEventListener('message', handleMessage);
-            resolve(msg.value || undefined);
-          }
-        };
+		async restoreClient(): Promise<PersistedClient | undefined> {
+			return new Promise((resolve) => {
+				const handleMessage = (event: MessageEvent) => {
+					const msg = event.data.pluginMessage;
+					if (msg?.type === 'storage-data' && msg.key === CACHE_KEY) {
+						window.removeEventListener('message', handleMessage);
+						resolve(msg.value || undefined);
+					}
+				};
 
-        window.addEventListener('message', handleMessage);
-        parent.postMessage({ pluginMessage: { type: 'get-storage', key: CACHE_KEY } }, '*');
+				window.addEventListener('message', handleMessage);
+				parent.postMessage({ pluginMessage: { type: 'get-storage', key: CACHE_KEY } }, '*');
 
-        setTimeout(() => {
-          window.removeEventListener('message', handleMessage);
-          resolve(undefined);
-        }, 500);
-      });
-    },
+				setTimeout(() => {
+					window.removeEventListener('message', handleMessage);
+					resolve(undefined);
+				}, 500);
+			});
+		},
 
-    async removeClient() {
-      parent.postMessage(
-        { pluginMessage: { type: 'set-storage', key: CACHE_KEY, value: null } },
-        '*'
-      );
-    },
-  };
+		async removeClient() {
+			parent.postMessage({ pluginMessage: { type: 'set-storage', key: CACHE_KEY, value: null } }, '*');
+		},
+	};
 }
 ```
 
@@ -737,7 +735,7 @@ export function createFigmaStoragePersistor(): Persister {
 
   onMount(async () => {
     const restoredState = await persister.restoreClient();
-    
+
     if (restoredState && restoredState.clientState) {
       const queries = restoredState.clientState.queries || [];
       queries.forEach((query: any) => {
@@ -803,9 +801,9 @@ export function createFigmaStoragePersistor(): Persister {
 ```
 
 This implementation provides:
+
 - ✅ Instant loading on subsequent opens
 - ✅ No loading spinner flash
 - ✅ Automatic cache persistence
 - ✅ Background data refresh
 - ✅ Automatic cache updates after mutations
-
