@@ -2,58 +2,47 @@
 	import Input from './components/Input.svelte';
 	import Button from './components/Button.svelte';
 	import LoadingSpinner from './components/LoadingSpinner.svelte';
-	import { useQuery, useConvexClient } from 'convex-svelte';
+	import { useConvexClient } from 'convex-svelte';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { api } from '../convex/_generated/api';
 	import type { Id } from '../convex/_generated/dataModel';
-	import { useClientCache } from './utils/useClientCache.svelte';
 	import { CONVEX_URL } from './convex';
 
 	let todoText: string = $state('');
 
-	// Get Convex client for mutations
+	// Get Convex client for queries and mutations
 	const convex = useConvexClient();
+	const queryClient = useQueryClient();
 
-	// Query todos from Convex
-	const todosQuery = useQuery(api.todos.get, {});
-
-	// Debug logging
-	$effect(() => {
-		console.log('[App] todosQuery state:', {
-			data: todosQuery.data,
-			isLoading: todosQuery.isLoading,
-			error: todosQuery.error,
-		});
-	});
-
-	// Use client cache for instant loading (pass getters to preserve reactivity)
-	const cache = useClientCache(
-		'todos_cache',
-		() => todosQuery.data,
-		() => todosQuery.isLoading,
-	);
-
-	// Debug cache state
-	$effect(() => {
-		console.log('[App] cache state:', {
-			displayData: cache.displayData,
-			shouldRender: cache.shouldRender,
-			shouldShowLoading: cache.shouldShowLoading,
-		});
-	});
+	// Use TanStack Query for caching and state management
+	// Wrap in function for Svelte reactivity (per TanStack Query docs)
+	const todosQuery = createQuery(() => ({
+		queryKey: ['todos'],
+		queryFn: async () => {
+			return await convex.query(api.todos.get, {});
+		},
+		enabled: !!CONVEX_URL, // Only run query if Convex is configured
+	}));
 
 	async function addTodo() {
 		if (todoText.trim()) {
 			await convex.mutation(api.todos.add, { text: todoText.trim() });
 			todoText = '';
+			// Invalidate and refetch todos after mutation
+			queryClient.invalidateQueries({ queryKey: ['todos'] });
 		}
 	}
 
 	async function toggleTodo(id: Id<'todos'>) {
 		await convex.mutation(api.todos.toggle, { id });
+		// Invalidate and refetch todos after mutation
+		queryClient.invalidateQueries({ queryKey: ['todos'] });
 	}
 
 	async function deleteTodo(id: Id<'todos'>) {
 		await convex.mutation(api.todos.remove, { id });
+		// Invalidate and refetch todos after mutation
+		queryClient.invalidateQueries({ queryKey: ['todos'] });
 	}
 
 	function handleKeyDown(event: KeyboardEvent) {
@@ -75,51 +64,49 @@
 			</p>
 		</div>
 	</div>
-{:else if cache.shouldRender}
-	{#if cache.shouldShowLoading}
-		<div class="loading-container">
-			<LoadingSpinner />
-		</div>
-	{:else}
-		<div class="container">
-			<h1 class="title">Todo App</h1>
+{:else if todosQuery.isPending}
+	<div class="loading-container">
+		<LoadingSpinner />
+	</div>
+{:else}
+	<div class="container">
+		<h1 class="title">Todo App</h1>
 
-			<div class="todos-list">
-				{#if todosQuery.error}
-					<p class="empty-state">Error loading todos: {todosQuery.error.toString()}</p>
-				{:else if !cache.displayData || cache.displayData.length === 0}
-					<p class="empty-state">No todos yet. Add one below!</p>
-				{:else}
-					{#each cache.displayData as todo (todo._id)}
-						<div class="todo-item">
-							<label class="todo-checkbox-label">
-								<input
-									type="checkbox"
-									class="todo-checkbox"
-									checked={todo.completed}
-									onchange={() => toggleTodo(todo._id)}
-								/>
-								<span class="todo-text" class:completed={todo.completed}>{todo.text}</span>
-							</label>
-							<button
-								class="delete-button"
-								onclick={() => deleteTodo(todo._id)}
-								type="button"
-								aria-label="Delete todo"
-							>
-								×
-							</button>
-						</div>
-					{/each}
-				{/if}
-			</div>
-
-			<div class="input-section">
-				<Input type="text" bind:value={todoText} onkeydown={handleKeyDown} placeholder="Enter a todo..." />
-				<Button onclick={addTodo}>Submit</Button>
-			</div>
+		<div class="todos-list">
+			{#if todosQuery.isError}
+				<p class="empty-state">Error loading todos: {todosQuery.error.message}</p>
+			{:else if !todosQuery.data || todosQuery.data.length === 0}
+				<p class="empty-state">No todos yet. Add one below!</p>
+			{:else}
+				{#each todosQuery.data as todo (todo._id)}
+					<div class="todo-item">
+						<label class="todo-checkbox-label">
+							<input
+								type="checkbox"
+								class="todo-checkbox"
+								checked={todo.completed}
+								onchange={() => toggleTodo(todo._id)}
+							/>
+							<span class="todo-text" class:completed={todo.completed}>{todo.text}</span>
+						</label>
+						<button
+							class="delete-button"
+							onclick={() => deleteTodo(todo._id)}
+							type="button"
+							aria-label="Delete todo"
+						>
+							×
+						</button>
+					</div>
+				{/each}
+			{/if}
 		</div>
-	{/if}
+
+		<div class="input-section">
+			<Input type="text" bind:value={todoText} onkeydown={handleKeyDown} placeholder="Enter a todo..." />
+			<Button onclick={addTodo}>Submit</Button>
+		</div>
+	</div>
 {/if}
 
 <style>

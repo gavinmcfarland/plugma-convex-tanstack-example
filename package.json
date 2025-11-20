@@ -20,6 +20,8 @@
 		"vite": "^7.0.0"
 	},
 	"dependencies": {
+		"@tanstack/query-persist-client-core": "^5.91.9",
+		"@tanstack/svelte-query": "^6.0.8",
 		"convex": "^1.29.0",
 		"convex-svelte": "^0.0.12",
 		"prettier": "latest"
