@@ -49,6 +49,7 @@ In `src/ui/ui.ts`:
 import { mount } from 'svelte';
 import './styles.css';
 import QueryProvider from './QueryProvider.svelte';
+import App from './App.svelte'; // Your app component
 
 // Import your backend setup function (swap this line to change backends!)
 import { setupConvex } from './convexSetup'; // For Convex
@@ -60,6 +61,7 @@ const app = mount(QueryProvider, {
 	target: document.getElementById('app')!,
 	props: {
 		setup: setupConvex, // Pass setup function as prop (or undefined for REST APIs)
+		component: App, // Pass your app component
 	},
 });
 
@@ -68,7 +70,8 @@ export default app;
 
 That's it! Now you can use TanStack Query with any backend.
 
-**To swap backends**: Just change which setup function you import and pass to `QueryProvider`!
+**To swap backends**: Just change which setup function you pass!  
+**To use a different app**: Just change which component you pass!
 
 ## Usage Examples
 
@@ -92,9 +95,14 @@ Then in `src/ui/ui.ts`:
 
 ```typescript
 import { setupConvex } from './convexSetup';
+import App from './App.svelte';
+
 mount(QueryProvider, {
 	target: document.getElementById('app')!,
-	props: { setup: setupConvex }, // Pass as prop
+	props: {
+		setup: setupConvex,
+		component: App,
+	},
 });
 ```
 
@@ -155,9 +163,14 @@ Then in `src/ui/ui.ts`:
 
 ```typescript
 import { setupSupabase } from './supabaseSetup';
+import App from './App.svelte';
+
 mount(QueryProvider, {
 	target: document.getElementById('app')!,
-	props: { setup: setupSupabase }, // Pass as prop
+	props: {
+		setup: setupSupabase,
+		component: App,
+	},
 });
 ```
 
@@ -244,9 +257,14 @@ Then in `src/ui/ui.ts`:
 
 ```typescript
 import { setupFirebase } from './firebaseSetup';
+import App from './App.svelte';
+
 mount(QueryProvider, {
 	target: document.getElementById('app')!,
-	props: { setup: setupFirebase }, // Pass as prop
+	props: {
+		setup: setupFirebase,
+		component: App,
+	},
 });
 ```
 
@@ -584,21 +602,41 @@ onMounted(async () => {
 To switch from one backend to another, just change the setup function in `ui.ts`:
 
 ```typescript
+import App from './App.svelte';
+
 // From Convex
 import { setupConvex } from './convexSetup';
-mount(QueryProvider, { props: { setup: setupConvex } });
+mount(QueryProvider, {
+	props: {
+		setup: setupConvex,
+		component: App,
+	},
+});
 
 // To Supabase
 import { setupSupabase } from './supabaseSetup';
-mount(QueryProvider, { props: { setup: setupSupabase } });
+mount(QueryProvider, {
+	props: {
+		setup: setupSupabase,
+		component: App,
+	},
+});
 
 // To Firebase
 import { setupFirebase } from './firebaseSetup';
-mount(QueryProvider, { props: { setup: setupFirebase } });
+mount(QueryProvider, {
+	props: {
+		setup: setupFirebase,
+		component: App,
+	},
+});
 
 // To REST API (no setup needed)
-mount(QueryProvider, { props: { setup: undefined } });
-// Or just omit the setup prop entirely
+mount(QueryProvider, {
+	props: {
+		component: App,
+	},
+});
 ```
 
 That's it! The caching layer stays the same, only the data source changes.

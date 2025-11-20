@@ -787,21 +787,28 @@ export function setupConvex() {
 import { mount } from 'svelte';
 import './styles.css';
 import QueryProvider from './QueryProvider.svelte';
-import { setupConvex } from './convexSetup';  // ← Import setup function
+import App from './App.svelte';  // ← Your app component
+import { setupConvex } from './convexSetup';  // ← Backend setup function
 
 const app = mount(QueryProvider, {
   target: document.getElementById('app')!,
   props: {
     setup: setupConvex,  // ← Pass as prop (runs during component init)
+    component: App,      // ← Pass your app component
   },
 });
 
 export default app;
 ```
 
-**✨ To switch backends, just change which setup function you pass! No nesting, no provider wrappers needed.**
+**✨ To switch backends, just change which setup function you pass!**  
+**✨ To use a different app, just change which component you pass!**  
 
-**Why pass as prop?** Some backends (like Convex) need to run during Svelte's component initialization to use `setContext`. By passing the setup function as a prop, it runs at the right time in the component lifecycle.
+**No nesting, no provider wrappers needed.**
+
+**Why pass as props?**
+- **`setup`**: Some backends (like Convex) need to run during Svelte's component initialization to use `setContext`. By passing the setup function as a prop, it runs at the right time in the component lifecycle.
+- **`component`**: Makes `QueryProvider` completely generic and reusable - it doesn't need to know about your specific app!
 
 ### 6. Using Queries (`src/ui/App.svelte`)
 

@@ -3,7 +3,7 @@
 	import { persistQueryClient } from '@tanstack/query-persist-client-core';
 	import { createFigmaStoragePersistor } from './utils/figmaStoragePersistor';
 	import { onMount } from 'svelte';
-	import App from './App.svelte';
+	import type { Component } from 'svelte';
 
 	interface Props {
 		/**
@@ -11,9 +11,13 @@
 		 * Called during component initialization, so it can use Svelte context APIs
 		 */
 		setup?: () => void;
+		/**
+		 * Your app component to render once the cache is restored
+		 */
+		component: Component;
 	}
 
-	let { setup }: Props = $props();
+	let { setup, component: AppComponent }: Props = $props();
 
 	// Run backend setup if provided (must be during component init for Svelte context)
 	setup?.();
@@ -67,6 +71,6 @@
 
 {#if ready}
 	<QueryClientProvider client={queryClient}>
-		<App />
+		<AppComponent />
 	</QueryClientProvider>
 {/if}

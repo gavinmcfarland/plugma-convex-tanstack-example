@@ -94,22 +94,27 @@ src/
 ### Key Components
 
 #### `ui.ts` - Entry Point
-Imports backend setup function and mounts `QueryProvider`:
+Imports your app and backend setup, then mounts `QueryProvider`:
 ```typescript
+import App from './App.svelte';
 import { setupConvex } from './convexSetup';  // ← Swap this to change backends!
 mount(QueryProvider, {
   target: document.getElementById('app')!,
-  props: { setup: setupConvex },  // ← Pass setup function as prop
+  props: {
+    setup: setupConvex,  // ← Backend initialization
+    component: App,      // ← Your app component
+  },
 });
 ```
 
 #### `QueryProvider.svelte` - The Magic ✨
-**Backend-agnostic** TanStack Query setup with:
+**Completely generic** TanStack Query provider with:
 - Automatic cache restoration (~10-50ms)
 - Persistent storage via Figma's `clientStorage`
 - Zero-config caching for any data source
 - Accepts optional `setup` prop for backend initialization
-- No nesting required!
+- Accepts `component` prop to render your app
+- No coupling to specific backends or apps!
 
 #### `*Setup.ts` - Backend Initialization
 Simple files that export setup functions. **Just swap which function you pass** to change backends!
@@ -136,29 +141,42 @@ The template is designed to work with **any** backend. Just change which setup f
 In `src/ui/ui.ts`, swap the backend setup function:
 
 ```typescript
+import App from './App.svelte';
+
 // Current: Convex
 import { setupConvex } from './convexSetup';
 mount(QueryProvider, {
   target: document.getElementById('app')!,
-  props: { setup: setupConvex },
+  props: {
+    setup: setupConvex,
+    component: App,
+  },
 });
 
 // Switch to Supabase
 import { setupSupabase } from './supabaseSetup';
 mount(QueryProvider, {
-  props: { setup: setupSupabase },  // ← Just change this!
+  props: {
+    setup: setupSupabase,  // ← Just change this!
+    component: App,
+  },
 });
 
 // Switch to Firebase  
 import { setupFirebase } from './firebaseSetup';
 mount(QueryProvider, {
-  props: { setup: setupFirebase },  // ← Or this!
+  props: {
+    setup: setupFirebase,  // ← Or this!
+    component: App,
+  },
 });
 
-// REST API? No setup needed - just omit the prop!
+// REST API? No setup needed - just omit the setup prop!
 mount(QueryProvider, {
   target: document.getElementById('app')!,
-  // No setup prop needed
+  props: {
+    component: App,
+  },
 });
 ```
 
