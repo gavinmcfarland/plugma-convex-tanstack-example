@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Input from './components/Input.svelte';
 	import Button from './components/Button.svelte';
+	import LoadingSpinner from './components/LoadingSpinner.svelte';
 	import { useQuery, useConvexClient } from 'convex-svelte';
 	import { api } from '../convex/_generated/api';
 	import type { Id } from '../convex/_generated/dataModel';
@@ -35,48 +36,60 @@
 	}
 </script>
 
-<div class="container">
-	<h1 class="title">Todo App</h1>
-
-	<div class="todos-list">
-		{#if todosQuery.isLoading}
-			<p class="empty-state">Loading todos...</p>
-		{:else if todosQuery.error}
-			<p class="empty-state">Error loading todos: {todosQuery.error.toString()}</p>
-		{:else if !todosQuery.data || todosQuery.data.length === 0}
-			<p class="empty-state">No todos yet. Add one below!</p>
-		{:else}
-			{#each todosQuery.data as todo (todo._id)}
-				<div class="todo-item">
-					<label class="todo-checkbox-label">
-						<input
-							type="checkbox"
-							class="todo-checkbox"
-							checked={todo.completed}
-							onchange={() => toggleTodo(todo._id)}
-						/>
-						<span class="todo-text" class:completed={todo.completed}>{todo.text}</span>
-					</label>
-					<button
-						class="delete-button"
-						onclick={() => deleteTodo(todo._id)}
-						type="button"
-						aria-label="Delete todo"
-					>
-						×
-					</button>
-				</div>
-			{/each}
-		{/if}
+{#if todosQuery.isLoading}
+	<div class="loading-container">
+		<LoadingSpinner />
 	</div>
+{:else}
+	<div class="container">
+		<h1 class="title">Todo App</h1>
 
-	<div class="input-section">
-		<Input type="text" bind:value={todoText} onkeydown={handleKeyDown} placeholder="Enter a todo..." />
-		<Button onclick={addTodo}>Submit</Button>
+		<div class="todos-list">
+			{#if todosQuery.error}
+				<p class="empty-state">Error loading todos: {todosQuery.error.toString()}</p>
+			{:else if !todosQuery.data || todosQuery.data.length === 0}
+				<p class="empty-state">No todos yet. Add one below!</p>
+			{:else}
+				{#each todosQuery.data as todo (todo._id)}
+					<div class="todo-item">
+						<label class="todo-checkbox-label">
+							<input
+								type="checkbox"
+								class="todo-checkbox"
+								checked={todo.completed}
+								onchange={() => toggleTodo(todo._id)}
+							/>
+							<span class="todo-text" class:completed={todo.completed}>{todo.text}</span>
+						</label>
+						<button
+							class="delete-button"
+							onclick={() => deleteTodo(todo._id)}
+							type="button"
+							aria-label="Delete todo"
+						>
+							×
+						</button>
+					</div>
+				{/each}
+			{/if}
+		</div>
+
+		<div class="input-section">
+			<Input type="text" bind:value={todoText} onkeydown={handleKeyDown} placeholder="Enter a todo..." />
+			<Button onclick={addTodo}>Submit</Button>
+		</div>
 	</div>
-</div>
+{/if}
 
 <style>
+	.loading-container {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 100%;
+		width: 100%;
+	}
+
 	.container {
 		display: flex;
 		flex-direction: column;
