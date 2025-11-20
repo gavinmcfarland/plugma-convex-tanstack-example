@@ -5,6 +5,7 @@
 	import { createFigmaStoragePersistor } from './utils/figmaStoragePersistor';
 	import { CONVEX_URL } from './convex';
 	import App from './App.svelte';
+	import { onMount } from 'svelte';
 
 	// Set up Convex client during component initialization
 	if (CONVEX_URL) {
@@ -12,6 +13,9 @@
 	} else {
 		console.warn('CONVEX_URL not set. Please run "npx convex dev" to set up Convex.');
 	}
+
+	// Track cache restoration state
+	let ready = $state(false);
 
 	// Set up TanStack Query client with caching configuration
 	const queryClient = new QueryClient({
@@ -26,14 +30,39 @@
 		},
 	});
 
-	// Set up cache persistence with Figma's clientStorage
-	persistQueryClient({
-		queryClient,
-		persister: createFigmaStoragePersistor(),
-		maxAge: 1000 * 60 * 60 * 24, // Persist for 24 hours
+	// Create persistor
+	const persister = createFigmaStoragePersistor();
+
+	// Initialize cache persistence
+	onMount(async () => {
+		// Restore cache from storage
+		const restoredState = await persister.restoreClient();
+
+		if (restoredState && restoredState.clientState) {
+			// Hydrate all queries from restored state
+			const queries = restoredState.clientState.queries || [];
+			queries.forEach((query: any) => {
+				if (query.queryKey && query.state) {
+					queryClient.setQueryData(query.queryKey, query.state.data);
+				}
+			});
+			console.log(`[ConvexProvider] Restored ${queries.length} queries from cache`);
+		}
+
+		// Set up automatic persistence for future updates
+		persistQueryClient({
+			queryClient,
+			persister,
+			maxAge: 1000 * 60 * 60 * 24,
+		});
+
+		// Mark as ready
+		ready = true;
 	});
 </script>
 
-<QueryClientProvider client={queryClient}>
-	<App />
-</QueryClientProvider>
+{#if ready}
+	<QueryClientProvider client={queryClient}>
+		<App />
+	</QueryClientProvider>
+{/if}
