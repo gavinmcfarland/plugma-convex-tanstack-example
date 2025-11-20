@@ -6,6 +6,7 @@
 	import { api } from '../convex/_generated/api';
 	import type { Id } from '../convex/_generated/dataModel';
 	import { useClientCache } from './utils/useClientCache.svelte';
+	import { CONVEX_URL } from './convex';
 
 	let todoText: string = $state('');
 
@@ -15,8 +16,30 @@
 	// Query todos from Convex
 	const todosQuery = useQuery(api.todos.get, {});
 
-	// Use client cache for instant loading
-	const cache = useClientCache('todos_cache', todosQuery.data, todosQuery.isLoading);
+	// Debug logging
+	$effect(() => {
+		console.log('[App] todosQuery state:', {
+			data: todosQuery.data,
+			isLoading: todosQuery.isLoading,
+			error: todosQuery.error,
+		});
+	});
+
+	// Use client cache for instant loading (pass getters to preserve reactivity)
+	const cache = useClientCache(
+		'todos_cache',
+		() => todosQuery.data,
+		() => todosQuery.isLoading,
+	);
+
+	// Debug cache state
+	$effect(() => {
+		console.log('[App] cache state:', {
+			displayData: cache.displayData,
+			shouldRender: cache.shouldRender,
+			shouldShowLoading: cache.shouldShowLoading,
+		});
+	});
 
 	async function addTodo() {
 		if (todoText.trim()) {
@@ -40,7 +63,19 @@
 	}
 </script>
 
-{#if cache.shouldRender}
+{#if !CONVEX_URL}
+	<div class="container">
+		<h1 class="title">Todo App</h1>
+		<div class="todos-list">
+			<p class="empty-state" style="color: var(--figma-color-text-danger, red);">
+				⚠️ Convex not configured. Please run <code
+					style="background: var(--figma-color-bg-secondary); padding: 2px 4px; border-radius: 2px;"
+					>npx convex dev</code
+				> and rebuild.
+			</p>
+		</div>
+	</div>
+{:else if cache.shouldRender}
 	{#if cache.shouldShowLoading}
 		<div class="loading-container">
 			<LoadingSpinner />

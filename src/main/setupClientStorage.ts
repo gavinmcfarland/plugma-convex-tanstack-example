@@ -40,13 +40,14 @@ export function setupClientStorage(): (msg: any) => Promise<boolean> {
 		if (msg.type === 'get-storage') {
 			try {
 				const value = await figma.clientStorage.getAsync(msg.key);
+				console.log(`[setupClientStorage] Retrieved value for "${msg.key}":`, value);
 				figma.ui.postMessage({
 					type: 'storage-data',
 					key: msg.key,
-					value: value,
+					value: value ?? null, // Ensure undefined becomes null
 				});
 			} catch (error) {
-				console.error('Error getting storage:', error);
+				console.error('[setupClientStorage] Error getting storage:', error);
 				figma.ui.postMessage({
 					type: 'storage-data',
 					key: msg.key,
@@ -56,9 +57,10 @@ export function setupClientStorage(): (msg: any) => Promise<boolean> {
 			return true;
 		} else if (msg.type === 'set-storage') {
 			try {
+				console.log(`[setupClientStorage] Setting value for "${msg.key}":`, msg.value);
 				await figma.clientStorage.setAsync(msg.key, msg.value);
 			} catch (error) {
-				console.error('Error setting storage:', error);
+				console.error('[setupClientStorage] Error setting storage:', error);
 			}
 			return true;
 		}

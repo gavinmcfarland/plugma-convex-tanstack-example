@@ -71,11 +71,11 @@ In your Svelte component:
   // Your data fetching logic (this example uses Convex)
   const dataQuery = useQuery(api.myData.get, {});
   
-  // Use the cache hook (don't destructure - keeps reactivity)
+  // Use the cache hook (pass getter functions to preserve reactivity)
   const cache = useClientCache(
-    'my_data_cache',      // Cache key - unique identifier
-    dataQuery.data,       // Live data from your source
-    dataQuery.isLoading   // Loading state
+    'my_data_cache',           // Cache key - unique identifier
+    () => dataQuery.data,      // Getter for live data
+    () => dataQuery.isLoading  // Getter for loading state
   );
 </script>
 
@@ -97,14 +97,14 @@ In your Svelte component:
 
 ## API Reference
 
-### `useClientCache<T>(cacheKey, liveData, isLoading)`
+### `useClientCache<T>(cacheKey, getLiveData, getIsLoading)`
 
 A Svelte hook for caching data in Figma's clientStorage.
 
 **Parameters:**
 - `cacheKey` (string): Unique key for storing data in clientStorage
-- `liveData` (T | null | undefined): Fresh data from your data source
-- `isLoading` (boolean): Whether the live data is currently loading
+- `getLiveData` (() => T | null | undefined): Getter function that returns fresh data from your data source
+- `getIsLoading` (() => boolean): Getter function that returns whether the live data is currently loading
 
 **Returns:**
 An object with reactive properties:
@@ -145,7 +145,11 @@ Sets up message handlers for clientStorage operations.
   import { useClientCache } from './utils/useClientCache.svelte';
   
   const todosQuery = useQuery(api.todos.get, {});
-  const cache = useClientCache('todos_cache', todosQuery.data, todosQuery.isLoading);
+  const cache = useClientCache(
+    'todos_cache',
+    () => todosQuery.data,
+    () => todosQuery.isLoading
+  );
 </script>
 
 {#if cache.shouldRender}
@@ -175,7 +179,11 @@ Sets up message handlers for clientStorage operations.
     isLoading = false;
   });
   
-  const cache = useClientCache('user_profile_cache', profile, isLoading);
+  const cache = useClientCache(
+    'user_profile_cache',
+    () => profile,
+    () => isLoading
+  );
 </script>
 
 {#if cache.shouldRender}
@@ -197,8 +205,16 @@ Sets up message handlers for clientStorage operations.
   const usersQuery = useQuery(api.users.list, {});
   const projectsQuery = useQuery(api.projects.list, {});
   
-  const usersCache = useClientCache('users_cache', usersQuery.data, usersQuery.isLoading);
-  const projectsCache = useClientCache('projects_cache', projectsQuery.data, projectsQuery.isLoading);
+  const usersCache = useClientCache(
+    'users_cache',
+    () => usersQuery.data,
+    () => usersQuery.isLoading
+  );
+  const projectsCache = useClientCache(
+    'projects_cache',
+    () => projectsQuery.data,
+    () => projectsQuery.isLoading
+  );
 </script>
 
 {#if usersCache.shouldRender && projectsCache.shouldRender}

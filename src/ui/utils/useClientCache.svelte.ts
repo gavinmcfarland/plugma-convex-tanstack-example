@@ -4,8 +4,8 @@ import { onMount } from 'svelte';
  * Hook for caching data in Figma's clientStorage
  *
  * @param cacheKey - The key to store data under in clientStorage
- * @param liveData - The fresh data from your data source (can be null/undefined while loading)
- * @param isLoading - Whether the live data is currently loading
+ * @param getLiveData - Getter function that returns the fresh data from your data source
+ * @param getIsLoading - Getter function that returns whether the live data is currently loading
  *
  * @returns An object with:
  *   - displayData: The data to display (live data if available, otherwise cached)
@@ -18,8 +18,12 @@ import { onMount } from 'svelte';
  *   import { useClientCache } from './utils/useClientCache.svelte';
  *
  *   const todosQuery = useQuery(api.todos.get, {});
- *   // Don't destructure - access properties directly to preserve reactivity
- *   const cache = useClientCache('todos_cache', todosQuery.data, todosQuery.isLoading);
+ *   // Pass getter functions to preserve reactivity
+ *   const cache = useClientCache(
+ *     'todos_cache',
+ *     () => todosQuery.data,
+ *     () => todosQuery.isLoading
+ *   );
  * </script>
  *
  * {#if cache.shouldRender}
@@ -34,7 +38,11 @@ import { onMount } from 'svelte';
  * {/if}
  * ```
  */
-export function useClientCache<T>(cacheKey: string, liveData: T | null | undefined, isLoading: boolean) {
+export function useClientCache<T>(
+	cacheKey: string,
+	getLiveData: () => T | null | undefined,
+	getIsLoading: () => boolean
+) {
 	const state = $state({
 		cachedData: null as T | null,
 		cacheChecked: false,
@@ -45,8 +53,10 @@ export function useClientCache<T>(cacheKey: string, liveData: T | null | undefin
 		const handleMessage = (event: MessageEvent) => {
 			const msg = event.data.pluginMessage;
 			if (msg?.type === 'storage-data' && msg.key === cacheKey) {
-				state.cachedData = msg.value;
+				// Handle both null and undefined as no cache
+				state.cachedData = msg.value ?? null;
 				state.cacheChecked = true;
+				console.log(`[useClientCache] Received cache for "${cacheKey}":`, msg.value);
 			}
 		};
 
@@ -54,13 +64,15 @@ export function useClientCache<T>(cacheKey: string, liveData: T | null | undefin
 
 		// Request cached data from plugin
 		parent.postMessage({ pluginMessage: { type: 'get-storage', key: cacheKey } }, '*');
+		console.log(`[useClientCache] Requested cache for "${cacheKey}"`);
 
-		// Fallback: if we don't get a response within 200ms, render anyway
+		// Fallback: if we don't get a response within 500ms, render anyway
 		const timeout = setTimeout(() => {
 			if (!state.cacheChecked) {
+				console.log(`[useClientCache] Timeout reached for "${cacheKey}", rendering without cache`);
 				state.cacheChecked = true;
 			}
-		}, 200);
+		}, 500);
 
 		return () => {
 			window.removeEventListener('message', handleMessage);
@@ -70,6 +82,7 @@ export function useClientCache<T>(cacheKey: string, liveData: T | null | undefin
 
 	// Save to cache when live data changes
 	$effect(() => {
+		const liveData = getLiveData();
 		if (liveData !== null && liveData !== undefined) {
 			state.cachedData = liveData;
 			parent.postMessage(
@@ -86,9 +99,22 @@ export function useClientCache<T>(cacheKey: string, liveData: T | null | undefin
 	});
 
 	// Create derived values
-	const displayData = $derived(liveData ?? state.cachedData);
+	const displayData = $derived(getLiveData() ?? state.cachedData);
 	const shouldRender = $derived(state.cacheChecked);
-	const shouldShowLoading = $derived(state.cacheChecked && !displayData && isLoading);
+	const shouldShowLoading = $derived(state.cacheChecked && !displayData && getIsLoading());
+
+	// Debug logging for derived values
+	$effect(() => {
+		console.log(`[useClientCache "${cacheKey}"] Derived state:`, {
+			liveData: getLiveData(),
+			cachedData: state.cachedData,
+			displayData,
+			cacheChecked: state.cacheChecked,
+			isLoading: getIsLoading(),
+			shouldRender,
+			shouldShowLoading,
+		});
+	});
 
 	// Return reactive values
 	return {
