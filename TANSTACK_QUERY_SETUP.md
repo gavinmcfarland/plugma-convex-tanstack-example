@@ -2,6 +2,8 @@
 
 This project uses [TanStack Query (Svelte Query)](https://tanstack.com/query/latest/docs/framework/svelte/overview) for data fetching, caching, and state management with Convex as the backend.
 
+> **Note**: The caching infrastructure (`QueryProvider`) is **backend-agnostic**. See [QUERY_PROVIDER_SETUP.md](./QUERY_PROVIDER_SETUP.md) for using it with Supabase, Firebase, REST APIs, or any other backend.
+
 ## Quick Summary
 
 This setup provides **instant loading** for your Figma plugin:
@@ -11,6 +13,7 @@ This setup provides **instant loading** for your Figma plugin:
 - 🔄 **Background refresh**: Fresh data loads silently while showing cached data
 - 💾 **Auto-persistence**: Cache saves to Figma's `clientStorage` automatically
 - ✨ **Zero configuration**: Set it up once, works automatically everywhere
+- 🔌 **Backend flexible**: Use the same setup with Convex, Supabase, Firebase, etc.
 
 **Result**: After the first load, your plugin feels instant! Users see data immediately while fresh data loads in the background.
 
@@ -701,22 +704,22 @@ export function createFigmaStoragePersistor(): Persister {
 }
 ```
 
-### 3. Root Component (`src/ui/ConvexProvider.svelte`)
+### 3. Generic Query Provider (`src/ui/QueryProvider.svelte`)
+
+**Backend-agnostic component** for TanStack Query + cache persistence:
 
 ```svelte
 <script lang="ts">
-  import { setupConvex } from 'convex-svelte';
   import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
   import { persistQueryClient } from '@tanstack/query-persist-client-core';
   import { createFigmaStoragePersistor } from './utils/figmaStoragePersistor';
-  import { CONVEX_URL } from './convex';
-  import App from './App.svelte';
   import { onMount } from 'svelte';
 
-  if (CONVEX_URL) {
-    setupConvex(CONVEX_URL);
+  interface Props {
+    children?: import('svelte').Snippet;
   }
 
+  let { children }: Props = $props();
   let ready = $state(false);
 
   const queryClient = new QueryClient({
@@ -746,24 +749,44 @@ export function createFigmaStoragePersistor(): Persister {
       console.log(`Restored ${queries.length} queries from cache`);
     }
 
-    persistQueryClient({
-      queryClient,
-      persister,
-      maxAge: 1000 * 60 * 60 * 24,
-    });
-
+    persistQueryClient({ queryClient, persister, maxAge: 1000 * 60 * 60 * 24 });
     ready = true;
   });
 </script>
 
 {#if ready}
   <QueryClientProvider client={queryClient}>
-    <App />
+    {@render children?.()}
   </QueryClientProvider>
 {/if}
 ```
 
-### 4. Using Queries (`src/ui/App.svelte`)
+### 4. Convex Provider (`src/ui/ConvexProvider.svelte`)
+
+**Convex-specific setup** that wraps QueryProvider:
+
+```svelte
+<script lang="ts">
+  import { setupConvex } from 'convex-svelte';
+  import { CONVEX_URL } from './convex';
+  import QueryProvider from './QueryProvider.svelte';
+  import App from './App.svelte';
+
+  // Set up Convex client
+  if (CONVEX_URL) {
+    setupConvex(CONVEX_URL);
+  }
+</script>
+
+<!-- QueryProvider handles TanStack Query + cache persistence -->
+<QueryProvider>
+  <App />
+</QueryProvider>
+```
+
+**✨ This modular design means `QueryProvider` can be reused with any backend!**
+
+### 5. Using Queries (`src/ui/App.svelte`)
 
 ```svelte
 <script lang="ts">
