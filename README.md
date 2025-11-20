@@ -64,10 +64,6 @@ The optimized build in `dist/` is ready to publish.
 - [Convex Docs](https://docs.convex.dev/)
 - [Figma Plugin API](https://www.figma.com/plugin-docs/)
 
-## 🤝 Contributing
-
-Issues and PRs welcome! This template showcases best practices for Figma plugin development.
-
 ---
 
 **Made with ❤️ for the Figma plugin community**
