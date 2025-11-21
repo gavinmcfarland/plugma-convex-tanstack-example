@@ -2,7 +2,7 @@
 
 An example Todo Figma plugin using Plugma for plugin developement, Convex for database storage and Tanstack for persisting to clientStorage for instant loading.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Requirements
 
@@ -48,7 +48,7 @@ pnpm build
 
 The optimized build in `dist/` is ready to publish.
 
-## 📚 Documentation
+## Documentation
 
 ### Core Setup
 
@@ -56,7 +56,7 @@ The optimized build in `dist/` is ready to publish.
 - **[Generic Query Provider Setup](./QUERY_PROVIDER_SETUP.md)** - Use with ANY backend (Supabase, Firebase, REST, etc.)
 - **[Convex Setup](./CONVEX_SETUP.md)** - Convex-specific configuration
 
-## 📖 Learn More
+## Learn More
 
 - [Plugma Docs](https://plugma.dev/docs)
 - [Svelte 5 Docs](https://svelte.dev/docs/svelte/overview)
